@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { connectDatabase } = require('./configurations/dbconfig')
+const userRoutes = require('./routers/user')
 const workExperience = require('./routers/workExperience')
 const cors = require('cors')
 
@@ -8,8 +9,8 @@ const SERVER_PORT = process.env.SERVER_PORT
 
 const app = express();
 app.use(express.json());
-app.use(cors({ credentials: true, origin: "http://localhost:5500" }))
-app.use('/api/portfolio', workExperience);
+app.use(cors({ credentials: true, origin: "http://localhost:3000" }))
+app.use('/api/portfolio', workExperience, userRoutes);
 
 connectDatabase();
 

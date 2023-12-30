@@ -1,5 +1,7 @@
-const WorkExperience = require('../models/workExperience')
-const { API_RESPONSE_MESSAGE, API_STATUS_CODES } = require('../constants/constants')
+const workExperience = require('../models/workExperience');
+const User = require('../models/user');
+
+const { API_RESPONSE_MESSAGE, API_STATUS_CODES } = require('../constants/constants');
 
 const addWorkExperience = async (req, res) => {
     try {
@@ -15,14 +17,20 @@ const addWorkExperience = async (req, res) => {
             })
         }
 
-        const experience = new WorkExperience({
+        const newExperienceData = {
             companyName,
             startDate,
             endDate,
             description
-        });
+        };
 
-        await experience.save();
+        const experience = await workExperience.create(newExperienceData);
+
+        const user = await User.findOne();
+
+        user.workExperience.unshift(experience._id);
+
+        await user.save();
 
         return res.json({
             status: API_STATUS_CODES.SUCCESS,
@@ -40,7 +48,7 @@ const addWorkExperience = async (req, res) => {
 
 const getAllWorkExperiences = async (req, res) => {
     try {
-        const experiences = await WorkExperience.find();
+        const experiences = await workExperience.find();
         return res.json({
             status: API_STATUS_CODES.SUCCESS,
             experiences: experiences,
@@ -55,7 +63,7 @@ const getAllWorkExperiences = async (req, res) => {
 
 const updateWorkExperience = async (req, res) => {
     try {
-        const existingExperience = await WorkExperience.findById(req.params.experienceId);
+        const existingExperience = await workExperience.findById(req.params.experienceId);
         const { companyName, startDate, endDate, description } = req.body;
 
         if (!existingExperience) {
@@ -95,16 +103,21 @@ const updateWorkExperience = async (req, res) => {
 
 const deleteWorkExperience = async (req, res) => {
     try {
-        const workExperience = await WorkExperience.findById(req.params.experienceId);
+        const user = await User.findOne()
+        const existingWorkExperience = await workExperience.findById(req.params.experienceId);
 
-        if (!workExperience) {
+        if (!existingWorkExperience) {
             return res.json({
                 status: API_STATUS_CODES.NOT_FOUND,
                 message: API_RESPONSE_MESSAGE.NO_EXPERIENCE_FOUND
             })
         }
 
-        await workExperience.deleteOne();
+        user.workExperience.pull(existingWorkExperience._id);
+
+        await existingWorkExperience.deleteOne();
+
+        await user.save();
 
         return res.json({
             status: API_STATUS_CODES.SUCCESS,
